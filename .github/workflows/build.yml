@@ -1,0 +1,107 @@
+name: Build HomeBox Lite APK
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Kiểm thử logic (JVM)
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew --no-daemon testDebugUnitTest 2>&1 | tee -a build.log
+
+      - name: Lint API 19 (NewApi)
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon lintRelease 2>&1 | tee -a build.log
+
+      - name: Build APK release
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon assembleRelease 2>&1 | tee -a build.log
+
+      - name: Kiểm tra chữ ký v1, kích thước, SHA-256
+        run: |
+          APK=app/build/outputs/apk/release/app-release.apk
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          $BT/apksigner verify --verbose --min-sdk-version 19 "$APK" | tee verify.txt
+          grep -q "Verified using v1 scheme (JAR signing): true" verify.txt
+          SIZE=$(stat -c %s "$APK")
+          echo "Kích thước APK: $SIZE byte"
+          test "$SIZE" -le 5242880
+          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          mkdir -p out
+          cp "$APK" out/HomeBox-Launcher.apk
+          (cd out && sha256sum HomeBox-Launcher.apk > HomeBox-Launcher.apk.sha256)
+          $BT/aapt dump badging out/HomeBox-Launcher.apk | grep -E "^(package|sdkVersion|targetSdkVersion|launchable-activity)" | tee out/badging.txt
+          {
+            echo "## HomeBox Lite $VERSION"
+            echo ""
+            echo "| Mục | Giá trị |"
+            echo "|---|---|"
+            echo "| Kích thước | $((SIZE / 1024)) KB |"
+            echo "| SHA-256 | \`$(cut -d' ' -f1 out/HomeBox-Launcher.apk.sha256)\` |"
+            echo "| Chữ ký v1 (Android 4.4) | có |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Báo lỗi build (nếu có)
+        if: failure()
+        run: |
+          if [ -f build.log ]; then
+            MSG=$(grep -E "^e: |error:|FAILED|What went wrong|Lint found|\.kt:[0-9]+|\.xml:[0-9]+" build.log | head -60 | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=Build log::$MSG"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports
+          path: |
+            build.log
+            app/build/reports/
+            app/build/test-results/
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HomeBox-Launcher-apk
+          path: out/
+
+      - name: Cập nhật bản "latest" (mỗi lần đẩy lên main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --cleanup-tag -y || true
+          gh release create latest out/HomeBox-Launcher.apk out/HomeBox-Launcher.apk.sha256 \
+            --target "${{ github.sha }}" --prerelease \
+            --title "HomeBox Lite — bản build mới nhất" \
+            --notes "Bản build tự động từ commit ${{ github.sha }}. Tải HomeBox-Launcher.apk để cài thử lên điện thoại hoặc box."
+
+      - name: Phát hành (khi đẩy tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/HomeBox-Launcher.apk
+            out/HomeBox-Launcher.apk.sha256

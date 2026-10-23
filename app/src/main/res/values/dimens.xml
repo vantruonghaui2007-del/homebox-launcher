@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Chữ thao tác tối thiểu 20sp, nhãn hai ô chính tối thiểu 28sp -->
+    <dimen name="text_tile">34sp</dimen>
+    <dimen name="text_action">20sp</dimen>
+    <dimen name="text_title">26sp</dimen>
+    <dimen name="text_small">17sp</dimen>
+    <dimen name="text_clock">40sp</dimen>
+    <dimen name="focus_stroke">4dp</dimen>
+    <dimen name="corner">16dp</dimen>
+    <dimen name="corner_tile">22dp</dimen>
+    <dimen name="gap">16dp</dimen>
+</resources>

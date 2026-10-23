@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.HomeBox" parent="@android:style/Theme.Holo.NoActionBar">
+        <item name="android:windowBackground">@color/bg_default</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowShowWallpaper">false</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+    </style>
+
+    <style name="HomeDialog" parent="@android:style/Theme.Holo.Dialog.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimAmount">0.65</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- Nút thao tác: nền mờ, focus viền trắng 4dp -->
+    <style name="HomeButton">
+        <item name="android:background">@drawable/bg_button</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:minHeight">60dp</item>
+        <item name="android:paddingLeft">22dp</item>
+        <item name="android:paddingRight">22dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:drawablePadding">10dp</item>
+        <item name="android:textSize">@dimen/text_action</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="HomeText">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">@dimen/text_action</item>
+    </style>
+
+    <style name="HomeText.Secondary">
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">@dimen/text_small</item>
+    </style>
+
+    <style name="HomeText.Title">
+        <item name="android:textSize">@dimen/text_title</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>
